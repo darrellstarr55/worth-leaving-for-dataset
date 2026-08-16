@@ -1,6 +1,13 @@
 name: Worth Leaving For Overture Dataset
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - "requirements.txt"
+      - ".github/workflows/daily-dataset.yml"
   schedule:
     - cron: "30 9 * * *"
   workflow_dispatch:
