@@ -1,0 +1,45 @@
+name: Worth Leaving For Overture Dataset
+
+on:
+  schedule:
+    - cron: "30 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: worth-leaving-for-overture-dataset
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install official Overture client
+        run: python -m pip install --requirement requirements.txt
+      - name: Test runner safeguards
+        run: python -m unittest discover -s tests
+      - name: Build bounded public dataset
+        run: python scripts/build_dataset.py
+      - name: Validate generated JSON
+        run: python -m json.tool data/latest.json >/dev/null
+      - name: Commit changed dataset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/latest.json
+          if git diff --cached --quiet; then
+            echo "Dataset is unchanged."
+          else
+            git commit -m "Update Overture place dataset"
+            git push
+          fi
