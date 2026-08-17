@@ -25,16 +25,17 @@ class DatasetTests(unittest.TestCase):
         self.assertEqual(first, replay)
         self.assertEqual("Detroit", first[0]["city"])
         self.assertEqual("MI", first[0]["stateCode"])
-        self.assertEqual(2, len(first))
-        self.assertNotEqual("MI", first[1]["stateCode"])
+        self.assertEqual(4, len(first))
+        self.assertEqual(3, len({item["stateCode"] for item in first[1:]}))
+        self.assertTrue(all(item["stateCode"] != "MI" for item in first[1:]))
 
     def test_payload_is_bounded_and_json_serializable(self):
         sample = [{"id": "place-1", "geometry": {"type": "Point", "coordinates": [-83.0, 42.3]}}]
         payload = build_payload(dt.date(2026, 8, 16), downloader=lambda _market: sample)
         self.assertEqual(SCHEMA_VERSION, payload["schemaVersion"])
         self.assertEqual(RELEASE, payload["release"])
-        self.assertEqual(2, len(payload["markets"]))
-        self.assertLessEqual(sum(len(item["records"]) for item in payload["markets"]), 700)
+        self.assertEqual(4, len(payload["markets"]))
+        self.assertLessEqual(sum(len(item["records"]) for item in payload["markets"]), 1400)
         json.dumps(payload)
 
     def test_empty_market_does_not_replace_last_good_dataset(self):
