@@ -4,12 +4,12 @@ This repository builds a small, bounded daily extract from the [Overture Maps Pl
 
 The workflow is intentionally credential-free:
 
-- GitHub Actions downloads open Overture data for Detroit plus one rotating U.S. market.
+- GitHub Actions downloads open Overture data for Detroit plus three rotating U.S. markets.
 - It writes only the latest validated public extract to `data/latest.json`.
 - The private Worth Leaving For scheduler fetches that file, validates it again, and stores qualifying records in its separate Local WOW evidence layer.
 - This runner cannot approve events, change event rankings, publish the site, activate affiliate links, or post to social media.
 
-The schedule runs at 09:30 UTC, ahead of the private site research run. Detroit refreshes daily; the other 51 U.S. jurisdictions rotate so the national foundation grows continuously without a paid places API.
+The schedule runs at 09:30 UTC, ahead of the private site research run. Detroit refreshes daily; three other U.S. jurisdictions refresh each day. The complete 51-jurisdiction rotation now finishes in about 17 days, so the national foundation grows continuously without a paid places API.
 
 ## Data and attribution
 
