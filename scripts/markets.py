@@ -69,5 +69,6 @@ def market(city: str, state_code: str, latitude: float, longitude: float) -> dic
 def daily_markets(day_ordinal: int) -> list[dict]:
     detroit = next(item for item in MARKETS if item[1] == "MI")
     rotation = tuple(item for item in MARKETS if item[1] != "MI")
-    selected = rotation[day_ordinal % len(rotation)]
-    return [market(*detroit), market(*selected)]
+    start = (day_ordinal * 3) % len(rotation)
+    selected = [rotation[(start + offset) % len(rotation)] for offset in range(3)]
+    return [market(*detroit), *(market(*item) for item in selected)]
