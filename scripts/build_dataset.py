@@ -12,7 +12,7 @@ from typing import Any
 
 from markets import daily_markets
 
-RELEASE = "2026-06-17.0"
+RELEASE = "latest"
 SCHEMA_VERSION = 1
 RECORDS_PER_MARKET = 350
 TARGET_TERMS = (
@@ -82,12 +82,12 @@ def download_market(market: dict[str, Any], cap: int = RECORDS_PER_MARKET) -> li
 
     try:
         reader = record_batch_reader(
-            "place", bbox=market_bbox(market), release=RELEASE, stac=True,
+            "place", bbox=market_bbox(market), stac=True,
             connect_timeout=10, request_timeout=45,
         )
     except Exception:
         reader = record_batch_reader(
-            "place", bbox=market_bbox(market), release=RELEASE, stac=False,
+            "place", bbox=market_bbox(market), stac=False,
             connect_timeout=10, request_timeout=45,
         )
     if reader is None:
@@ -108,7 +108,21 @@ def download_market(market: dict[str, Any], cap: int = RECORDS_PER_MARKET) -> li
     return sorted(records, key=lambda item: item["id"])
 
 
-def build_payload(today: dt.date, downloader=download_market) -> dict[str, Any]:
+def resolve_release() -> str:
+    from overturemaps.core import get_latest_release
+
+    release = get_latest_release()
+    if not isinstance(release, str) or not release or release == "latest":
+        raise RuntimeError("Overture did not return a valid current release.")
+    return release
+
+
+def build_payload(
+    today: dt.date,
+    downloader=download_market,
+    release: str | None = None,
+) -> dict[str, Any]:
+    selected_release = release or (resolve_release() if downloader is download_market else RELEASE)
     markets = []
     for selected in daily_markets(today.toordinal()):
         records = downloader(selected)
@@ -117,7 +131,7 @@ def build_payload(today: dt.date, downloader=download_market) -> dict[str, Any]:
         markets.append({"market": selected, "records": records})
     return {
         "schemaVersion": SCHEMA_VERSION,
-        "release": RELEASE,
+        "release": selected_release,
         "generatedAt": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
         "markets": markets,
     }
@@ -130,7 +144,7 @@ def main() -> int:
     args = parser.parse_args()
     if args.dry_run:
         selected = daily_markets(dt.date.today().toordinal())
-        print(json.dumps({"release": RELEASE, "markets": selected}, indent=2))
+        print(json.dumps({"release": resolve_release(), "markets": selected}, indent=2))
         return 0
     payload = build_payload(dt.date.today())
     output = Path(args.output)
@@ -138,7 +152,7 @@ def main() -> int:
     output.write_text(json.dumps(payload, ensure_ascii=True, separators=(",", ":")) + "\n", encoding="utf-8")
     print(json.dumps({
         "generatedAt": payload["generatedAt"],
-        "release": RELEASE,
+        "release": payload["release"],
         "markets": [f"{item['market']['city']}, {item['market']['stateCode']}" for item in payload["markets"]],
         "records": sum(len(item["records"]) for item in payload["markets"]),
     }))
