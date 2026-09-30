@@ -1,8 +1,8 @@
 name: Build Backup Archive
 
 on:
-  pull_request:
-    branches: [ main ]
+  push:
+    branches: [ "backup/2026-09-30" ]
 
 jobs:
   backup:
@@ -13,8 +13,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Create archive
-        run: |
-          zip -r worth-leaving-for-backup.zip . -x ".git/*"
+        run: zip -r worth-leaving-for-backup.zip . -x ".git/*"
       - name: Upload backup
         uses: actions/upload-artifact@v4
         with:
