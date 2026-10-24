@@ -1,0 +1,22 @@
+name: Build Backup Archive
+
+on:
+  push:
+    branches: [ "backup/2026-09-30" ]
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create archive
+        run: zip -r worth-leaving-for-backup.zip . -x ".git/*"
+      - name: Upload backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: worth-leaving-for-backup
+          path: worth-leaving-for-backup.zip
+          retention-days: 7
